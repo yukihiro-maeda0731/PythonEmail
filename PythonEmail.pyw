@@ -1,4 +1,6 @@
 import smtplib, ssl
+import requests
+from bs4 import BeautifulSoup
 
 def read_creds():
     user = passw = ""
@@ -9,6 +11,16 @@ def read_creds():
 
     return user, passw
 
+def check_inventory():
+    url = "https://www.pokemoncenter-online.com/?p_cd=4521329322735"
+    r = requests.get(url)
+    c = r.content
+    soup = BeautifulSoup(c.decode("CP932"), "lxml")
+    all=soup.find_all("div",{"class":"detail"})
+    print(c)
+    inventory_existence_flg = False
+    return inventory_existence_flg
+
 
 port = 465
 
@@ -17,17 +29,16 @@ sender, password = read_creds()
 receiver = sender
 
 message = """\
-Subject: Pythonmailtest
+Subject: Inventory Notification
 
-sending email via python
+We have new inventory.
 
 """
 
 context = ssl.create_default_context()
 
-print("Starting to send")
 with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-    server.login(sender, password)
-    server.sendmail(sender, receiver, message)
-
-print("sent email!")
+    if(check_inventory()):
+        server.login(sender, password)
+        server.sendmail(sender, receiver, message)
+        print("メールを送信しました")
